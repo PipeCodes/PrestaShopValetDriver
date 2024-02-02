@@ -1,37 +1,29 @@
 <?php
 
+namespace Valet\Drivers\Custom;
+
+use Valet\Drivers\ValetDriver;
+
 class PrestaShopValetDriver extends ValetDriver
 {
     /**
      * Determine if the driver serves the request.
-     *
-     * @param  string $sitePath
-     * @param  string $siteName
-     * @param  string $uri
-     *
-     * @return bool
      */
-    public function serves($sitePath, $siteName, $uri)
+    public function serves(string $sitePath, string $siteName, string $uri): bool
     {
         return file_exists($sitePath . '/classes/PrestaShopAutoload.php');
     }
 
     /**
      * Determine if the incoming request is for a static file.
-     *
-     * @param  string $sitePath
-     * @param  string $siteName
-     * @param  string $uri
-     *
-     * @return string|false
      */
-    public function isStaticFile($sitePath, $siteName, $uri)
+    public function isStaticFile(string $sitePath, string $siteName, string $uri)
     {
         // Basic static file
         if (is_file($staticFilePath = "{$sitePath}/{$uri}")) {
             return $staticFilePath;
         }
-        
+
         // rewrite categories images
         if (preg_match('/c\/([0-9]*)-category_default\/.*\.jpg/', $uri, $matches)) {
             $staticFilePath = "{$sitePath}/img/c/{$matches[1]}.jpg";
@@ -82,7 +74,7 @@ class PrestaShopValetDriver extends ValetDriver
             }
         }
 
-        
+
         // rewrite ^/([0-9])([0-9])(-[_a-zA-Z0-9-]*)?(-[0-9]+)?/.+.jpg$ /img/p/$1/$2/$1$2$3$4.jpg last;
         if (preg_match('/([0-9])([0-9])(-[_a-zA-Z0-9-]*)?(-[0-9]+)?\/.+\.jpg/i', $uri, $matches)) {
             if (is_file($staticFilePath = "{$sitePath}/img/p/{$matches[1]}/{$matches[2]}/{$matches[1]}{$matches[2]}{$matches[3]}.jpg")) {
@@ -102,21 +94,15 @@ class PrestaShopValetDriver extends ValetDriver
 
     /**
      * Get the fully resolved path to the application's front controller.
-     *
-     * @param  string $sitePath
-     * @param  string $siteName
-     * @param  string $uri
-     *
-     * @return string
      */
-    public function frontControllerPath($sitePath, $siteName, $uri)
+    public function frontControllerPath(string $sitePath, string $siteName, string $uri): string
     {
         //Legacy URls
-        $parts = explode('/',$uri);
-        if(isset($parts[1]) && $parts[1] !='' && file_exists($adminIdex = $sitePath . '/'. $parts[1] .'/index.php')){
+        $parts = explode('/', $uri);
+        if (isset($parts[1]) && $parts[1] != '' && file_exists($adminIdex = $sitePath . '/' . $parts[1] . '/index.php')) {
             $_SERVER['SCRIPT_FILENAME'] = $adminIdex;
-            $_SERVER['SCRIPT_NAME'] = '/'. $parts[1] .'/index.php';
-            if(isset($_GET['controller']) || isset($_GET['tab'])){
+            $_SERVER['SCRIPT_NAME'] = '/' . $parts[1] . '/index.php';
+            if (isset($_GET['controller']) || isset($_GET['tab'])) {
                 return $adminIdex;
             }
             return $adminIdex;
